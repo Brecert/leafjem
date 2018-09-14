@@ -18,7 +18,7 @@ class Renderer {
 		this.ctx = this.canvas.getContext('2d')
 	}
 
-	attatch = (gameObject: Rectangle) => {
+	attatch = (gameObject: Renderable) => {
 		gameObject.ctx = this.ctx
 	}
 
@@ -58,7 +58,7 @@ class Game {
 		this.renderer.draw(this.objects)
 	}
 
-	attatch(object: Rectangle) {
+	attatch(object: Renderable) {
 		this.objects[object.gid] = object
 		this.renderer.attatch(object)
 	}
@@ -80,7 +80,7 @@ class Game {
 		}
 		for (let objectName in this.objects) {
 			let object = this.objects[objectName]
-
+			
 			if (object.gid !== event.detail.region) {
 				if (object.hovered) {
 					object.unHover()
@@ -112,7 +112,7 @@ class Rectangle implements Renderable {
 
 	public hovered: boolean
 
-	constructor(x: number, y: number, width: number = 32, height: number = 32, name: string = `Rectangle-${gid()}`, ctx?) {
+	constructor(x: number, y: number, width: number = 32, height: number = 32, name: string = `Rectangle-${gid()}`, ctx?: CanvasRenderingContext2D) {
 		this.gid = name
 		this.name = name
 		this.pos = new Vec2(x, y)
@@ -140,25 +140,20 @@ class Rectangle implements Renderable {
 		this.ctx.beginPath()
 		this.ctx.rect(this.pos.x, this.pos.y, this.size.x, this.size.y)
 
-		if (this.fill || this.outline) {
-			if (this.fill) {
-				this.ctx.fillStyle = this.fillColor
-				this.ctx.fill()
-			}
-			if (this.outline) {
-				this.ctx.strokeStyle = this.outlineColor
-				this.ctx.stroke()
-			}
-
-			this.ctx.addHitRegion({id: this.gid})
+		if (this.fill) {
+			this.ctx.fillStyle = this.fillColor
+			this.ctx.fill()
 		}
-
-		console.log(this.gid)
+		if (this.outline) {
+			this.ctx.strokeStyle = this.outlineColor
+			this.ctx.stroke()
+		}
+		this.ctx.addHitRegion({id: this.gid})
 		return this
 	}
 }
 
 let game = new Game
-let rectangle = new Rectangle("Rectangle", 10, 10)
+let rectangle = new Rectangle(10, 10)
 game.attatch(rectangle)
 game.draw()
