@@ -4,6 +4,8 @@ import Vec2 from './leafjem/vec2'
 import Mouse from './leafjem/mouse'
 import { Renderable } from './leafjem/object/renderable'
 import { GameObject } from './leafjem/object/game_object'
+import gid from './leafjem/util/generate_id'
+
 
 let mouse = new Mouse(document)
 
@@ -57,7 +59,7 @@ class Game {
 	}
 
 	attatch(object: Rectangle) {
-		this.objects[object.name] = object
+		this.objects[object.gid] = object
 		this.renderer.attatch(object)
 	}
 
@@ -79,7 +81,7 @@ class Game {
 		for (let objectName in this.objects) {
 			let object = this.objects[objectName]
 
-			if (object.name !== event.detail.region) {
+			if (object.gid !== event.detail.region) {
 				if (object.hovered) {
 					object.unHover()
 				}
@@ -95,31 +97,33 @@ class Game {
 }
 
 class Rectangle implements Renderable {
-	public ctx?: CanvasRenderingContext2D
-	public name: string
+	public gid: string
 
+	public name: string
 	public pos: Vec2
 	public size: Vec2
+	public ctx?: CanvasRenderingContext2D
+
 	public fill: boolean
 	public fillColor: string
+
 	public outline: boolean
 	public outlineColor: string
+
 	public hovered: boolean
 
-	constructor(x: number, y: number, width: number = 32, height: number = 32 ctx?: CanvasRenderingContext2D, name: string = "Rectangle") {
-		this.ctx = ctx
+	constructor(x: number, y: number, width: number = 32, height: number = 32, name: string = `Rectangle-${gid()}`, ctx?) {
+		this.gid = name
 		this.name = name
-
 		this.pos = new Vec2(x, y)
 		this.size = new Vec2(width, height)
+		this.ctx = ctx
 
 		this.fill = true
 		this.fillColor = '#000000'
 
 		this.outline = false
 		this.outlineColor = '#000000'
-
-		this.hovered = false
 	}
 
 	onHover() {
@@ -136,20 +140,25 @@ class Rectangle implements Renderable {
 		this.ctx.beginPath()
 		this.ctx.rect(this.pos.x, this.pos.y, this.size.x, this.size.y)
 
-		if (this.fill) {
-			this.ctx.fillStyle = this.fillColor
-			this.ctx.fill()
+		if (this.fill || this.outline) {
+			if (this.fill) {
+				this.ctx.fillStyle = this.fillColor
+				this.ctx.fill()
+			}
+			if (this.outline) {
+				this.ctx.strokeStyle = this.outlineColor
+				this.ctx.stroke()
+			}
+
+			this.ctx.addHitRegion({id: this.gid})
 		}
-		if (this.outline) {
-			this.ctx.strokeStyle = this.outlineColor
-			this.ctx.stroke()
-		}
-		this.ctx.addHitRegion({id: this.name})
+
+		console.log(this.gid)
 		return this
 	}
 }
 
 let game = new Game
-let rectangle = new Rectangle(10, 10)
+let rectangle = new Rectangle("Rectangle", 10, 10)
 game.attatch(rectangle)
 game.draw()
