@@ -1,20 +1,64 @@
 import { GameObject } from './game_object'
 import Vec2 from '../vec2'
+import gid from '../util/generate_id'
 
+export interface RenderableInterface extends GameObject {
+	name: string
+	pos: Vec2
+	size: Vec2
+	ctx?: CanvasRenderingContext2D
+	game?: object
 
-export interface Renderable extends GameObject {
-	public name: string = "Renderable"
-	public pos: Vec2
-	public size: Vec2
-	public ctx?: CanvasRenderingContext2D
+	hovered: boolean
+	held: boolean
 
-	public hovered: boolean = false
+	whileOver()
 
-	public onHover()
+	onPress()
 
-	public unHover()
+	unPress()
 
-	public draw()
+	onHover()
+
+	unHover()
+
+	draw()
+}
+
+export class Renderable implements RenderableInterface {
+	gid: string
+
+	name: string
+	pos: Vec2
+	size: Vec2
+	ctx?: CanvasRenderingContext2D
+	game?: object
+
+	hovered: boolean
+	held: boolean
+
+	constructor(pos, size, name = `Renderable-${gid()}`, ctx?: CanvasRenderingContext2D) {
+		this.name = name
+		this.gid = name
+
+		this.pos = pos
+		this.size = size
+
+		this.ctx = ctx
+
+		this.hovered = false
+		this.held = false
+	}
+
+	whileOver = () => {}
+
+	onPress = () => {}
+	unPress = () => {}
+
+	onHover = () => {}
+	unHover = () => {}
+
+	draw = () => {}
 }
 
 // export interface Renderable extends RenderableInterface {

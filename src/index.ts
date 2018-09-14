@@ -43,7 +43,7 @@ class Game {
 	container: Container
 	renderer: Renderer
 	mouse: Mouse
-	objects: Rectangle[]
+	objects: Renderable[]
 
 	constructor() {
 		this.container = new Container
@@ -60,27 +60,36 @@ class Game {
 
 	attatch(object: Renderable) {
 		this.objects[object.gid] = object
+		object.game = this
 		this.renderer.attatch(object)
 	}
 
 	private bindEvents() {
 		this.container.canvas.addEventListener('leafjem.mouse', this.mouseEventHandler)
+		this.container.canvas.addEventListener('leafjem.mouse.move', this.moveEventHandler)
+		this.container.canvas.addEventListener('leafjem.mouse.press', this.pressEventHandler)
+		this.container.canvas.addEventListener('leafjem.mouse.release', this.releaseEventHandler)
 	}
 
-	// Any Leafjem mouse event
 	private mouseEventHandler = (event) => {
+		if (event.detail.region !== "") {
+			this.objects[event.detail.region].whileOver()
+		}
+	}
+
+	private moveEventHandler = (event) => {
 		if (event.detail.region !== "") {
 			// Only send onHover once.
 			if (this.objects[event.detail.region].hovered) {
 				this.objects[event.detail.region].hovered = true
-				this.objects[event.detail.region].onHover()
 			} else {
+				this.objects[event.detail.region].onHover()
 				this.objects[event.detail.region].hovered = true
 			}
 		}
 		for (let objectName in this.objects) {
 			let object = this.objects[objectName]
-			
+
 			if (object.gid !== event.detail.region) {
 				if (object.hovered) {
 					object.unHover()
@@ -94,15 +103,46 @@ class Game {
 			}
 		}
 	}
+
+	private pressEventHandler = (event) => {
+		if (event.detail.region !== "") {
+			// Only send onHover once.
+			if (this.objects[event.detail.region].held) {
+				this.objects[event.detail.region].onPress()
+			} else {
+				this.objects[event.detail.region].held = true
+			}
+		}
+		for (let objectName in this.objects) {
+			let object = this.objects[objectName]
+
+			if (object.gid !== event.detail.region) {
+				object.held = false
+			}
+		}
+	}
+
+	private releaseEventHandler = (event) => {
+		if (event.detail.region !== "") {
+			// Only send onHover once.
+			if (this.objects[event.detail.region].held) {
+				this.objects[event.detail.region].unPress()
+			} else {
+				this.objects[event.detail.region].held = false
+			}
+		}
+		for (let objectName in this.objects) {
+			let object = this.objects[objectName]
+
+			if (object.gid !== event.detail.region) {
+				object.held = false
+			}
+		}
+	}
 }
 
-class Rectangle implements Renderable {
-	public gid: string
-
-	public name: string
-	public pos: Vec2
-	public size: Vec2
-	public ctx?: CanvasRenderingContext2D
+class Rectangle extends Renderable {
+	public game: Game
 
 	public fill: boolean
 	public fillColor: string
@@ -111,13 +151,12 @@ class Rectangle implements Renderable {
 	public outlineColor: string
 
 	public hovered: boolean
+	public held: boolean
 
-	constructor(x: number, y: number, width: number = 32, height: number = 32, name: string = `Rectangle-${gid()}`, ctx?: CanvasRenderingContext2D) {
-		this.gid = name
-		this.name = name
-		this.pos = new Vec2(x, y)
-		this.size = new Vec2(width, height)
-		this.ctx = ctx
+	public dragging: boolean
+
+	constructor(pos, size = new Vec2(32, 32), name: string = `Rectangle-${gid()}`, ctx?: CanvasRenderingContext2D) {
+		super(pos, size, name, ctx)
 
 		this.fill = true
 		this.fillColor = '#000000'
@@ -126,17 +165,27 @@ class Rectangle implements Renderable {
 		this.outlineColor = '#000000'
 	}
 
-	onHover() {
+	onPress = () => {
+		this.fillColor = "purple"
+		this.draw()
+	}
+
+	unPress = () => {
+		this.fillColor = "red"
+		this.draw()
+	}
+
+	onHover = () => {
 		this.fillColor = "blue"
 		this.draw()
 	}
 
-	unHover() {
+	unHover = () => {
 		this.fillColor = "black"
 		this.draw()
 	}
 
-	draw() {
+	draw = () => {
 		this.ctx.beginPath()
 		this.ctx.rect(this.pos.x, this.pos.y, this.size.x, this.size.y)
 
@@ -154,6 +203,8 @@ class Rectangle implements Renderable {
 }
 
 let game = new Game
-let rectangle = new Rectangle(10, 10)
+let rectangle = new Rectangle(new Vec2(32, 32))
+game.attatch(rectangle)
+rectangle = new Rectangle(new Vec2(10, 10))
 game.attatch(rectangle)
 game.draw()
